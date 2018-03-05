@@ -369,13 +369,6 @@ class MicrosoftAutodiscover(AutoDiscoverView):
 
     """
 
-    RESPONSE_SCHEMA = 'http://schemas.microsoft.com/exchange/autodiscover/' \
-                     'responseschema/2006'
-
-    XMLNS_XSD = 'http://www.w3.org/2001/XMLSchema'
-
-    XMLNS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
-    
     def __init__(self, config, xml):
         super(MicrosoftAutodiscover, self).__init__(config)
         xml = etree.fromstring(xml).getchildren()[0]
@@ -438,7 +431,7 @@ class MicrosoftAutodiscover(AutoDiscoverView):
         self.output('</Response>')
 
     def __outlook_sync(self):
-        """Prints Autodiscovery response document
+        """Prints Autodiscover response document
 
         :return:
         """
