@@ -495,7 +495,7 @@ def main():
         view = ConfigV1(config)
         view.set_user_info(*ldap.search(email_addr))
     else:
-        view = MicrosoftAutodiscover(config, XML) #form.value)
+        view = MicrosoftAutodiscover(config, form.value)
         view.set_user_info(*ldap.search(view.user_email))
 
     if not view:
