@@ -29,6 +29,7 @@ from collections import defaultdict
 import cStringIO
 
 from datetime import datetime
+
 from lxml import etree
 
 from ldap3 import Server, Connection, NONE, SIMPLE, ANONYMOUS
@@ -242,6 +243,7 @@ class AutoDiscoverView(object):
         self.output("Content-Type: text/xml; charset=utf-8\n")
         self.output("\n")
         self._process()
+        self.output("\n")
 
     def build(self):
         """Build autodiscover document
@@ -371,35 +373,77 @@ class MicrosoftAutodiscover(AutoDiscoverView):
 
     def __init__(self, config, xml):
         super(MicrosoftAutodiscover, self).__init__(config)
+        self._responses = []
+
+        if xml:
+            self.__parse_xml_doc(xml)
+
+    def __parse_xml_doc(self, xml):
+        """parse Autodiscover xml document
+
+        :param xml:
+        :return:
+        """
+        if not isinstance(xml, str):
+            xml = xml.encode()
         xml = etree.fromstring(xml).getchildren()[0]
-        self._responses  = []
+
         for element in xml.iter():
             if 'EMailAddress' in element.tag:
                 self._user_email = element.text
             if 'AcceptableResponseSchema' in element.tag:
                 self._responses.append(element.text)
 
+    def send(self):
+        """
+
+        :return:
+        """
+        if os.environ['REQUEST_METHOD'] == 'OPTIONS':
+            self.output("Status: 451 ActiveSync is there\n")
+            self.output("X-MS-Location: {0}\n".format(self.active_sync_host))
+            self.output("Cache-Control: private\n")
+            self.output("Content-Length: 0\n")
+            self.output("\n")
+        else:
+            super(MicrosoftAutodiscover, self).send()
+
     def _process(self):
-        self.output('<?xml version="1.0" encoding="utf-8"?>')
+        """
+
+        :return:
+        """
+        self.output("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
         self.output('<Autodiscover xmlns="http://schemas.microsoft.com/'
                     'exchange/autodiscover/responseschema/2006">')
+
         for response in self._responses:
             if 'mobilesync' in response:
                 self.__mobile_sync()
             elif 'outlook' in response:
                 self.__outlook_sync()
             else:
-                self.output('<Response xmlns="{0}">'.format(response))
-                self.output('<Error Time="{0}" Id="{1}">'.format(
-                    datetime.now().strftime('%H:%M:%S.%f'),
-                    2477272013
-                ))
-                self.output('<ErrorCode>600</ErrorCode>')
-                self.output('<Message>Invalid Request</Message>')
-                self.output('<DebugData/>')
-                self.output('</Response>')
+                self.__error(response)
+        else:
+            self.__error('', )
 
         self.output('</Autodiscover>')
+
+    def __error(self, response):
+        """
+
+        :return:
+        """
+        self.output('<Response xmlns="{0}">'.format(response))
+        self.output('<Error Time="{0}" Id="{1}">'.format(
+            datetime.now().strftime('%H:%M:%S.%f'),
+            2477272013
+        ))
+        self.output('<ErrorCode>600</ErrorCode>')
+        self.output('<Message>Invald request</Message>')
+        self.output('<DebugData/>')
+        self.output('</Error>')
+        self.output('</Response>')
 
     def __mobile_sync(self):
         """Prints Autodiscover response document for Activesync
@@ -474,7 +518,7 @@ def main():
 
     :return:
     """
-    form = cgi.FieldStorage()
+    request = cgi.FieldStorage()
     if "SERVER_PROTOCOL" in os.environ:
         cgitb.enable()
 
@@ -489,13 +533,20 @@ def main():
 
     view = None
     ldap = LdapClient(config)
-
-    email_addr = form.getfirst('emailaddress')
+    email_addr = None
+    if request:
+        email_addr = request.getfirst('emailaddress')
     if email_addr:
         view = ConfigV1(config)
         view.set_user_info(*ldap.search(email_addr))
     else:
-        view = MicrosoftAutodiscover(config, form.value)
+        xml = ''
+        if isinstance(request.value, list):
+            for field in request.value:
+                xml = ''.join([xml, '='.join([field.name, field.value])])
+        else:
+            xml = request.value
+        view = MicrosoftAutodiscover(config, xml)
         view.set_user_info(*ldap.search(view.user_email))
 
     if not view:
@@ -505,7 +556,6 @@ def main():
         view.send()
     else:
         print(view.build())
-    exit(0)
 
 
 if __name__ == '__main__':
