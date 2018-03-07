@@ -37,11 +37,12 @@ from ldap3 import Server, Connection, NONE, SIMPLE, ANONYMOUS
 
 _TREE = lambda: defaultdict(_TREE)
 
+
 CONFIG_PATH = (
     os.path.realpath(os.path.dirname(__file__)),
     os.path.join(os.sep, 'etc', 'opt'),
     os.path.join(os.sep, 'etc', 'opt', 'scalix'),
-    os.path.join(os.sep, 'etc', 'opt', 'autodiscover'),
+    os.path.join(os.sep, 'etc', 'opt', 'scalix-autodiscover'),
 )
 
 
@@ -417,6 +418,13 @@ class MicrosoftAutodiscover(AutoDiscoverView):
         self.output('<Autodiscover xmlns="http://schemas.microsoft.com/'
                     'exchange/autodiscover/responseschema/2006">')
 
+        if not self._responses:
+            self.__error('', )
+            return
+
+        if not self._responses:
+            self.__error('', )
+
         for response in self._responses:
             if 'mobilesync' in response:
                 self.__mobile_sync()
@@ -424,8 +432,6 @@ class MicrosoftAutodiscover(AutoDiscoverView):
                 self.__outlook_sync()
             else:
                 self.__error(response)
-        else:
-            self.__error('', )
 
         self.output('</Autodiscover>')
 
@@ -546,6 +552,7 @@ def main():
                 xml = ''.join([xml, '='.join([field.name, field.value])])
         else:
             xml = request.value
+
         view = MicrosoftAutodiscover(config, xml)
         view.set_user_info(*ldap.search(view.user_email))
 
