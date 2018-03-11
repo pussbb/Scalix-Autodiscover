@@ -108,6 +108,7 @@ Somewhere in config before your VirtualHost
 ```
 
 Inside VirtualHost section
+
 ```plain
     ServerAlias autodiscover.*
     Alias /autodiscover/autodiscover.xml /opt/scalix-autodiscover/cgi/autodiscover.py
@@ -116,4 +117,19 @@ Inside VirtualHost section
     Alias /AutoDiscover/AutoDiscover.xml /opt/scalix-autodiscover/cgi/autodiscover.py
     Alias /.well-known/autoconfig/mail/config-v1.1.xml /opt/scalix-autodiscover/cgi/autodiscover.py
     Alias /mail/config-v1.1.xml /opt/scalix-autodiscover/cgi/autodiscover.py
+```
+
+Restart httpd(Apache) 
+
+```shell
+    service httpd restart
+    # or
+    systemctl restart httpd
+```
+
+Ubuntu
+```shell
+    service apache2 restart
+    # or
+    systemctl restart httpd
 ```
