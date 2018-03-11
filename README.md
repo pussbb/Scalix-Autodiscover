@@ -84,15 +84,18 @@ Ubuntu
 Chmod 
 ```shell
 :~$ chmod a+x /opt/scalix-autodiscover/cgi/autodiscover.py
-:~$ chown a /etc/opt/scalix-autodiscover/autodiscover.ini
+:~$ chmod a+ /etc/opt/scalix-autodiscover/autodiscover.ini
 ```
 
 Somewhere in config before your VirtualHost 
 
 ```plain
-<Directory "/opt/scalix-autodiscover/bin">
+<Directory "/opt/scalix-autodiscover/cgi">
         AllowOverride None
         Options +ExecCGI -Includes
+        AddHandler cgi-script .py
+        AddHandler cgi-script .cgi
+        AddHandler wsgi-script .wsgi
         <IfVersion >= 2.4>
                 Require all granted
         </IfVersion>
@@ -107,10 +110,10 @@ Somewhere in config before your VirtualHost
 Inside VirtualHost section
 ```plain
     ServerAlias autodiscover.*
-    Alias /autodiscover/autodiscover.xml /opt/scalix-autodiscover/bin/autodiscover.py
-    Alias /autodiscover/autodiscover.exc /opt/scalix-autodiscover/bin/autodiscover.py
-    Alias /Autodiscover/Autodiscover.xml /opt/scalix-autodiscover/bin/autodiscover.py
-    Alias /AutoDiscover/AutoDiscover.xml /opt/scalix-autodiscover/bin/autodiscover.py
-    Alias /.well-known/autoconfig/mail/config-v1.1.xml /opt/scalix-autodiscover/bin/autodiscover.py
-    Alias /mail/config-v1.1.xml /opt/scalix-autodiscover/bin/autodiscover.py
+    Alias /autodiscover/autodiscover.xml /opt/scalix-autodiscover/cgi/autodiscover.py
+    Alias /autodiscover/autodiscover.exc /opt/scalix-autodiscover/cgi/autodiscover.py
+    Alias /Autodiscover/Autodiscover.xml /opt/scalix-autodiscover/cgi/autodiscover.py
+    Alias /AutoDiscover/AutoDiscover.xml /opt/scalix-autodiscover/cgi/autodiscover.py
+    Alias /.well-known/autoconfig/mail/config-v1.1.xml /opt/scalix-autodiscover/cgi/autodiscover.py
+    Alias /mail/config-v1.1.xml /opt/scalix-autodiscover/cgi/autodiscover.py
 ```
