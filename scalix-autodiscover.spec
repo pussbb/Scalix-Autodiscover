@@ -9,7 +9,7 @@ Group:      Applications/Communications
 Vendor:     Scalix Corporation
 URL:        http://www.scalix.com
 Packager:   Scalix Support <support@scalix.com>
-Requires:   python python-pip httpd libxml2-dev
+Requires:   python python-pip httpd libxml2-devel gcc python-devel
 
 %description
 The Autodiscover service minimizes user configuration

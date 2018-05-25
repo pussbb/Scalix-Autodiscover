@@ -5,6 +5,8 @@ apache2_mods_en="$apache2_base/mods-enabled"
 
 $(type -p pip) install -r /opt/scalix-autodiscover/requirements.txt
 
+ln -s /opt/scalix-autodiscover/cgi/httpd_directory.conf /etc/apache2/conf-enabled/scalix_autodiscover_directory.conf
+
 function enable_apache_mods() {
   for ext in "conf" "load"
   do
@@ -27,7 +29,7 @@ do
     fi
 done
 
-chown nouser.nogroup /opt/scalix-autodiscover/cgi/autodiscover.py
-chown nouser.nogroup /etc/opt/scalix-autodiscover/autodiscover.ini
+chown nobody:nogroup /opt/scalix-autodiscover/cgi/autodiscover.py
+chown nobody:nogroup /etc/opt/scalix-autodiscover/autodiscover.ini
 chmod a+x /opt/scalix-autodiscover/cgi/autodiscover.py
 chmod a+ /etc/opt/scalix-autodiscover/autodiscover.ini
