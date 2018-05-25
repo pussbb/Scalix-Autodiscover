@@ -49,8 +49,12 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+build/
 
 # PyBuilder
 target/
 venv/
 .idea
+
+*.rpm
+*.deb

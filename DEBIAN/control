@@ -1,0 +1,12 @@
+Package: scalix-autodiscover
+Version: 0.0.2
+Section: scalix
+Homepage: http://www.scalix.com
+Depends: python, python-pip, apache2, libxml2-dev
+Priority: optional
+Essential: no
+Architecture: all
+Maintainer: Scalix Support <support@scalix.com>
+Description: The Autodiscover service minimizes user configuration
+    and deployment steps by providing clients access to email
+    and groupware server features.
