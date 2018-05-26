@@ -33,3 +33,5 @@ chown nobody:nogroup /opt/scalix-autodiscover/cgi/autodiscover.py
 chown nobody:nogroup /etc/opt/scalix-autodiscover/autodiscover.ini
 chmod a+x /opt/scalix-autodiscover/cgi/autodiscover.py
 chmod a+ /etc/opt/scalix-autodiscover/autodiscover.ini
+
+invoke-rc.d apache2 force-reload
