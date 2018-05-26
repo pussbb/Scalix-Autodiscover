@@ -12,6 +12,6 @@ By default order how client will try to get settings is following
 5. after all attemps can be performed  DNS SRV lookup to autodiscover.tcp.site.com that will reply to "mail.site.com"
 
 
-[Manual-Installation](./wiki/Manual-Installation)
+[Manual-Installation](../../wiki/Manual-Installation)
 
-[Installing-with-system-package-manager](./wiki/Installing-with-system-package-manager)
+[Installing-with-system-package-manager](../../wiki/Installing-with-system-package-manager)
