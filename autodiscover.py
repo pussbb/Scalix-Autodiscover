@@ -525,7 +525,7 @@ def main():
     :return:
     """
     request = cgi.FieldStorage()
-    if "SERVER_PROTOCOL" in os.environ:
+    if 'SERVER_PROTOCOL' in os.environ:
         cgitb.enable()
 
     config = Config(stream=sys.stdout)
@@ -536,6 +536,18 @@ def main():
             break
     else:
         raise RuntimeError('Could not find autodiscover.ini')
+
+    if '.well-known' in os.environ.get('REQUEST_URI'):
+        parts = filter(None, os.environ.get('REQUEST_URI').split('/'))[1:]
+        for part in parts[:1]:
+            item = '_'.join([part, 'host'])
+            url = config.general.get(item)
+            if url:
+                print('Status: 301 Moved Permanently')
+                print('Location: ' + url + "\r\n")
+        else:
+            print("Status: 404 Not Found\r\n")
+        return
 
     view = None
     ldap = LdapClient(config)
@@ -559,7 +571,7 @@ def main():
     if not view:
         raise RuntimeError('Unknown request')
 
-    if "SERVER_PROTOCOL" in os.environ:
+    if 'SERVER_PROTOCOL' in os.environ:
         view.send()
     else:
         print(view.build())
