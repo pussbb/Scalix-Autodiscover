@@ -18,7 +18,10 @@ Foundation, Inc., 59 Temple Street #330, Boston, MA 02111-1307, USA.
 
 """
 from __future__ import print_function
+
+import ast
 import cgi
+import simplejson as json
 import os
 import cgitb
 import sys
@@ -543,27 +546,68 @@ class WellKnownAutodiscover(AutoDiscoverView):
 
         :return: void
         """
-        self._process()
-        self.output("\n")
-
-    def _process(self):
-        """Process request
-
-        :return: void
-        """
         if not self._request_uri:
             self.output("Status: 400 Bad request\r\n")
 
+        if 'host-meta' in self._request_uri:
+            self._content_type = 'application/xml; charset=utf-8'
+            if ('json' in os.environ.get('ACCEPT', '')
+                    or '.json' in self._request_uri):
+                self._content_type = 'application/json; charset=utf-8'
+            super(WellKnownAutodiscover, self).send()
+            return
+
         parts = filter(None, self._request_uri.split('/'))[1:]
+        well_known = self._config.get('well-known', {})
+
         for part in parts:
-            item = '_'.join([part, 'host'])
-            url = self._config.general.get(item)
+            url = well_known.get(part)
             if url:
                 self.output("Status: 301 Moved Permanently\r\n")
                 self.output('Location: ' + url + "\r\n")
                 return
         else:
             self.output("Status: 404 Not Found\r\n")
+
+    def __get_host_meta_links(self):
+        host_meta = self._config.get('host-meta', {})
+        for item in host_meta.values():
+            item = ast.literal_eval(item)
+            rel = item[0]
+            url = item[1]
+            descr = ''
+            if len(item) == 3:
+                descr = item[2]
+            yield rel, url, descr
+
+    def _process(self):
+        """Process request
+
+        :return: void
+        """
+        if 'json' in self._content_type:
+            res = []
+            for link in self.__get_host_meta_links():
+                rel, url, descr = link
+                res.append({
+                    'link': rel,
+                    'url': url,
+                    'titles': {
+                        'default': descr
+                    }
+                })
+            self.output(json.dumps({'links': res}))
+            return
+
+        self.output("<?xml version='1.0' encoding='utf-8'?>")
+        self.output('<XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">')
+        for link in self.__get_host_meta_links():
+            rel, url, descr = link
+            self.output('<Link rel="{0}" href="{1}">'.format(rel, url))
+            if descr:
+                self.output("<Title>{0}</Title>".format(descr))
+            self.output('</Link>')
+        self.output('</XRD>')
 
 
 def guess_config_filenames(domain):
@@ -589,6 +633,7 @@ def guess_config_filenames(domain):
     """
     if not domain:
         return []
+
     parts = filter(None, domain.split('.'))
 
     if len(parts) == 1:

@@ -1,2 +1,3 @@
 lxml
 ldap3
+simplejson
