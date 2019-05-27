@@ -92,7 +92,11 @@ class Config(DictWrapper):
         :param filename: string settings filename
         :return:
         """
+        if not filename:
+            raise RuntimeError('File does not exists')
+
         filename = os.path.realpath(os.path.expanduser(filename))
+
         if not os.path.exists(filename):
             raise RuntimeError('File {0} does not exists'.format(filename))
         config_parser = ConfigParser(allow_no_value=True)
@@ -225,23 +229,32 @@ class AutoDiscoverView(object):
 
     """
 
+    _content_type = 'text/xml; charset=utf-8'
+
     def __init__(self, config):
         self._config = config
         self._user_display_name = None
         self._user_email = None
         self.__stream = self._config.get('stream', cStringIO.StringIO())
+        self.__headers = []
 
     def __getattr__(self, item):
         if item in self._config:
             return self._config[item]
         return self._config.general[item]
 
+    def _add_header(self, header):
+        self.__headers.append(header)
+
     def send(self):
         """Prints autodiscover document for HTTP request
 
         :return:
         """
-        self.output("Content-Type: text/xml; charset=utf-8\n")
+        for header in self.__headers:
+            self.output(header + "\r\n")
+        if self._content_type:
+            self.output("Content-Type: {0}\n".format(self._content_type))
         self.output("\n")
         self._process()
         self.output("\n")
@@ -519,42 +532,115 @@ class MicrosoftAutodiscover(AutoDiscoverView):
         self.output('</Response>')
 
 
+class WellKnownAutodiscover(AutoDiscoverView):
+
+    def __init__(self, request_uri, config):
+        super(WellKnownAutodiscover, self).__init__(config)
+        self._request_uri = request_uri
+
+    def send(self):
+        """Process request
+
+        :return: void
+        """
+        self._process()
+        self.output("\n")
+
+    def _process(self):
+        """Process request
+
+        :return: void
+        """
+        if not self._request_uri:
+            self.output("Status: 400 Bad request\r\n")
+
+        parts = filter(None, self._request_uri.split('/'))[1:]
+        for part in parts:
+            item = '_'.join([part, 'host'])
+            url = self._config.general.get(item)
+            if url:
+                self.output("Status: 301 Moved Permanently\r\n")
+                self.output('Location: ' + url + "\r\n")
+                return
+        else:
+            self.output("Status: 404 Not Found\r\n")
+
+
+def guess_config_filenames(domain):
+    """Generates a list with possible domain names.
+
+    Example:
+    >>> guess_config_filenames('scalix.com')
+    ['scalix.com']
+    >>> guess_config_filenames('rpm.scalix.com')
+    ['rpm.scalix.com', 'scalix.com']
+    >>> guess_config_filenames('192.1.3.3.3')
+    ['192.1.3.3.3', '1.3.3.3', '3.3.3', '3.3']
+    >>> guess_config_filenames('com')
+    ['com']
+    >>> guess_config_filenames('.')
+    []
+    >>> guess_config_filenames(None)
+    []
+
+
+    :param domain: string
+    :return: list of possible domain names
+    """
+    if not domain:
+        return []
+    parts = filter(None, domain.split('.'))
+
+    if len(parts) == 1:
+        return parts
+
+    res = []
+    tld_index = len(parts) - 2
+    for index, _ in enumerate(parts):
+        if tld_index == index:
+            res.append('.'.join(parts[index:]))
+            break
+        res.append('.'.join(parts[index:]))
+    return res
+
+
+def find_config(hostname):
+    """Tries to find config file for specified domain
+
+    :param hostname: string
+    :return: str or None
+    """
+    domains = guess_config_filenames(hostname) + ['']
+    for domain in domains:
+        if domain:
+            domain = '{0}{1}'.format(domain, '.')
+        for path in CONFIG_PATH:
+            cfg_file = '{0}{1}{2}autodiscover.ini'.format(path, os.sep, domain)
+            if os.path.exists(cfg_file):
+                return cfg_file
+    return None
+
+
 def main():
     """
 
     :return:
     """
-    request = cgi.FieldStorage()
     if 'SERVER_PROTOCOL' in os.environ:
         cgitb.enable()
 
+    request = cgi.FieldStorage()
     config = Config(stream=sys.stdout)
-    for config_file in CONFIG_PATH:
-        config_file = '{0}{1}autodiscover.ini'.format(config_file, os.sep)
-        if os.path.exists(config_file):
-            config.from_config_file(config_file)
-            break
-    else:
-        raise RuntimeError('Could not find autodiscover.ini')
-
-    if '.well-known' in os.environ.get('REQUEST_URI'):
-        parts = filter(None, os.environ.get('REQUEST_URI').split('/'))[1:]
-        for part in parts[:1]:
-            item = '_'.join([part, 'host'])
-            url = config.general.get(item)
-            if url:
-                print('Status: 301 Moved Permanently')
-                print('Location: ' + url + "\r\n")
-        else:
-            print("Status: 404 Not Found\r\n")
-        return
+    config.from_config_file(find_config(os.environ.get('HTTP_HOST')))
 
     view = None
     ldap = LdapClient(config)
-    email_addr = None
-    if request:
-        email_addr = request.getfirst('emailaddress')
-    if email_addr:
+    email_addr = request.getfirst('emailaddress')
+    request_uri = os.environ.get('REQUEST_URI', '')
+
+    if '.well-known' in request_uri:
+        view = WellKnownAutodiscover(request_uri, config)
+    elif email_addr:
         view = ConfigV1(config)
         view.set_user_info(*ldap.search(email_addr))
     else:
@@ -567,9 +653,6 @@ def main():
 
         view = MicrosoftAutodiscover(config, xml)
         view.set_user_info(*ldap.search(view.user_email))
-
-    if not view:
-        raise RuntimeError('Unknown request')
 
     if 'SERVER_PROTOCOL' in os.environ:
         view.send()
