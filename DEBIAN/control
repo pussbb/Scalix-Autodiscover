@@ -1,8 +1,8 @@
 Package: scalix-autodiscover
-Version: 0.0.4
+Version: 0.0.5
 Section: scalix
 Homepage: http://www.scalix.com
-Depends: python, python-pip, apache2, libxml2-dev, python-dev, gcc,  libxslt1-dev, python-lxml
+Depends: python, python-pip, libxml2-dev, python-dev, gcc, libxslt1-dev, python-lxml
 Priority: optional
 Essential: no
 Architecture: all

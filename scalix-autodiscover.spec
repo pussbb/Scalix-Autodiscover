@@ -1,5 +1,5 @@
 Name:       scalix-autodiscover
-Version:    0.0.4
+Version:    0.0.5
 Release:    1%{?dist}
 Summary:    Scalix Autodiscover service
 License:    Copyright 2018 Scalix, Inc. (www.scalix.com)
@@ -9,7 +9,7 @@ Group:      Applications/Communications
 Vendor:     Scalix Corporation
 URL:        http://www.scalix.com
 Packager:   Scalix Support <support@scalix.com>
-Requires:   python /usr/bin/pip httpd libxml2-devel gcc python-devel
+Requires:   python /usr/bin/pip libxml2-devel gcc python-devel
 
 %description
 The Autodiscover service minimizes user configuration
