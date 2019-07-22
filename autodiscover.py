@@ -683,7 +683,7 @@ def main():
     email_addr = request.getfirst('emailaddress')
     request_uri = os.environ.get('REQUEST_URI', '')
 
-    if '.well-known' in request_uri:
+    if '.well-known' in request_uri and 'mail/config' not in request_uri:
         view = WellKnownAutodiscover(request_uri, config)
     elif email_addr:
         view = ConfigV1(config)
