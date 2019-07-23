@@ -1,5 +1,5 @@
 Name:       scalix-autodiscover
-Version:    0.0.7
+Version:    0.0.8
 Release:    1%{?dist}
 Summary:    Scalix Autodiscover service
 License:    Copyright 2018 Scalix, Inc. (www.scalix.com)
@@ -35,7 +35,7 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root)
 /etc/httpd/conf.d/scalix_autodiscover_directory.conf
-%attr(0555, nobody, nobody) /etc/opt/scalix-autodiscover/autodiscover.ini
+%config %attr(0555, nobody, nobody) /etc/opt/scalix-autodiscover/autodiscover.ini
 /opt/scalix-autodiscover/cgi/httpd_directory.conf
 /opt/scalix-autodiscover/cgi/httpd_vhost.conf
 /opt/scalix-autodiscover/requirements.txt
