@@ -565,6 +565,7 @@ class WellKnownAutodiscover(AutoDiscoverView):
             if url:
                 self.output("Status: 301 Moved Permanently\r\n")
                 self.output('Location: ' + url + "\r\n")
+                self.output("\r\n")
                 return
         else:
             self.output("Status: 404 Not Found\r\n")
@@ -680,7 +681,12 @@ def main():
 
     view = None
     ldap = LdapClient(config)
-    email_addr = request.getfirst('emailaddress')
+    try:
+        email_addr = request.getfirst('emailaddress')
+    except TypeError as _:
+        traceback.print_exc()
+        email_addr = None
+
     request_uri = os.environ.get('REQUEST_URI', '')
 
     if '.well-known' in request_uri and 'mail/config' not in request_uri:
@@ -706,4 +712,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    import traceback
+    try:
+         main()
+    except:
+        print("\n\n<PRE>")
+        traceback.print_exc()
