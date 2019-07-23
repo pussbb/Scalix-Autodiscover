@@ -1,5 +1,5 @@
 Name:       scalix-autodiscover
-Version:    0.0.8
+Version:    0.0.9
 Release:    1%{?dist}
 Summary:    Scalix Autodiscover service
 License:    Copyright 2018 Scalix, Inc. (www.scalix.com)
